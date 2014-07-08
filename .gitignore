@@ -1,0 +1,10 @@
+# OS generated files #
+#####################
+.DS_Store
+
+# virtualenv files #
+###################
+.Python
+/bin
+/include
+/lib
