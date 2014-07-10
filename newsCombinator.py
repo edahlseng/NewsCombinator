@@ -43,13 +43,20 @@ def renderObjectForTimeAvailable():
     renderObject = {'EDL': [] }
 
     for video in videos:
+
+        url = video['videoHigh'] if video['videoHigh'] else ""
+        startTime = video['startTime'] if video['startTime'] else ""
+        endTime = video['endTime'] if video['endTime'] else ""
+        title = video['creator'] if video['creator'] else ""
+        thumbnail = video['thumbnail'] if video['thumbnail'] else ""
+
         renderObject['EDL'].append(
             {
-                'url': video['videoHigh'],
-                'startTime': video['startTime'],
-                'endTime': video['endTime'],
-                'title': video['title'],
-                'thumbnail': video['thumbnail']
+                'url': url,
+                'startTime': startTime,
+                'endTime': endTime,
+                'title': title,
+                'thumbnail': thumbnail
             })
 
     response = {'errorCode' : errorCode, 'renderObject' : renderObject}
