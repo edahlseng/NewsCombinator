@@ -56,12 +56,14 @@ function setupVideoPlayer()
 		thumbnailContainer.appendChild(thumbnail);
 		thumbnailContainer.appendChild(title);
 
-		var videoElement = document.createElement('div');
-		videoElement.setAttribute('class', 'video');
-		videoElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
-		videoElement.appendChild(thumbnailContainer);
+		var clipElement = document.createElement('div');
+		clipElement.setAttribute('class', 'video');
+		clipElement.setAttribute('id', 'clip' + i);
+		clipElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
+		clipElement.appendChild(thumbnailContainer);
+		clipElement.addEventListener('click', clipClicked);
 
-		playlistContainer.appendChild(videoElement);
+		playlistContainer.appendChild(clipElement);
 	}
 
 	// ----------------------
@@ -85,7 +87,7 @@ function setupVideoPlayer()
         temporaryBackground.style.visibility = "hidden";
 
         // start the video
-		player.play();
+		// player.play();
 		
 		// start the timer for hiding all of the unwanted controls
 		mouseMove();
@@ -139,4 +141,11 @@ function mouseMove()
 			document.body.style.cursor = "none";
 		}, 3000);
 	}
+}
+
+function clipClicked(e)
+{
+	var clipIndex = parseInt(this.id.substring(4));
+	console.log(clipIndex);
+	player.seekToClipIndex(clipIndex);
 }

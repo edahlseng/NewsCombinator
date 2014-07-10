@@ -53,9 +53,10 @@ body {
 	height: 72px;
 }
 
-.video {
+.video { /* change name to clip */
 	height: 100%;
 	display: inline-block;
+	cursor: pointer;
 }
 
 .thumbnailContainer {
