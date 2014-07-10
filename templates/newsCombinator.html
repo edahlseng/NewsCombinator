@@ -4,14 +4,20 @@
 		<title>NewsCombinator</title>
 		<link rel="stylesheet" href="/static/newsCombinator.css"></link>
 		<script src="/static/newsCombinator.js"></script>
+		<script src="/static/um-video-player.js"></script>
 	</head>
 	<body>
+		<!-- Placeholder for video player -->
+    	<div id="um_video_player_wrapper" onclick=videoClicked() onmousemove=mouseMove()></div>
+		
+    	<div id="temporaryBackground"></div>
+
 		<div id="timeSelectionContainer">
-			<p id="timeSelectionDescription">
-				Less time spent searching.  More time spent watching.
-			</p>
-			<p>How much time do you have?<p>
-			<div>
+			<div id="descriptionContainer">
+				<p class="description">Spend time watching. Not searching.</p>
+				<p class="description">How much time do you have?</p>
+			</div>
+			<div id="timeButtonContainer">
 				<button class="timeButton" id="few" onclick=timeSelected()>A few min</button>
 				<button class="timeButton" id="5" onclick=timeSelected()>5 min</button>
 				<button class="timeButton" id="10" onclick=timeSelected()>10 min</button>
@@ -28,9 +34,9 @@
 			</div>
 		</div>
 		
-		<!-- Placeholder for video player -->
-    	<div id="um_video_player_wrapper"></div>
-		
-		<div></div> <!-- carousel -->
+		<div id="controlsContainer">
+			<div id="progressSlider"></div> <!-- progressSlider -->
+			<div id="playlistContainer"></div> <!-- thumbnailCarousel -->
+		</div>
 	</body>
 </html>

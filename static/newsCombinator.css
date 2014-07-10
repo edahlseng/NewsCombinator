@@ -1,6 +1,72 @@
 body {
 	margin: 0;
+	width: 100%;
+	height: 100%;
 }
+
+#um_video_player_wrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 0;
+	background: black;
+}
+
+.um-videoPlayer {
+	width: 100%;
+	height: 100%;
+}
+
+#temporaryBackground {
+	position: absolute;
+	margin: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	background: white;
+}
+
+/*************************************/
+/* Video controls */
+/*************************************/
+
+#controlsContainer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	z-index: 0;
+	background: blue;
+}
+
+#progressSlider {
+	width: 100%;
+	height: 10px;
+}
+
+#playlistContainer {
+	width: 100%;
+	height: 72px;
+}
+
+.video {
+	height: 100%;
+	display: inline-block;
+}
+
+.thumbnailContainer {
+	max-width: 128px;
+	height: 100%;
+	margin: 0 auto;
+}
+
+/****************************************/
+/* Time selection/Welcome screen */
+/****************************************/
 
 #timeSelectionContainer {
 	position: relative;
@@ -10,12 +76,23 @@ body {
 	background: red;
 }
 
-#timeSelectionDescription {
+#descriptionContainer {
+	height: 50px;
+	overflow: hidden;
+}
 
+.description {
+	margin-top: 0;
+}
+
+#timeButtonContainer {
+	width: 100%;
+	height: 30px;
 }
 
 .timeButton {
 	width: 7.6923%;
+	height: 100%;
 	margin: 0 0;
 	float: left; /* eliminate the spaces between buttons */
 	border-width: 1px;
@@ -28,14 +105,5 @@ body {
 	background: black;
 }
 
-#um_video_player_wrapper {
-	position: absolute;
-	top: 0;
-	left: 0;
-	margin: 0;
-	height: 100%;
-	width: 100%;
-	z-index: 0;
-	background: green;
-}
+
 
