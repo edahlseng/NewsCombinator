@@ -65,6 +65,38 @@ body {
 	margin: 0 auto;
 }
 
+#played {
+	position: absolute;
+	width: 10%;
+	height: 10%;
+	left: 50%;
+	top: 50%;
+	margin-left: -5%;
+	margin-top: -5%;
+	background: rgba(0, 0, 0, .7);
+	color: white;
+	visibility: hidden;
+
+	font-size: 72px;
+	text-align: center;
+}
+
+#paused {
+	position: absolute;
+	width: 10%;
+	height: 10%;
+	left: 50%;
+	top: 50%;
+	margin-left: -5%;
+	margin-top: -5%;
+	background: rgba(0, 0, 0, .7);
+	color: white;
+	visibility: hidden;
+
+	font-size: 72px;
+	text-align: center;
+}
+
 /****************************************/
 /* Time selection/Welcome screen */
 /****************************************/

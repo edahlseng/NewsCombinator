@@ -5,7 +5,6 @@
 // etc.
 // fullscreen support
 // better controls
-// play & pause callbacks
 
 
 function UMVideoPlayer(wrapperId, renderObject, options) {
@@ -21,6 +20,8 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.onLoadError = options.onLoadError;
     this.onRenderObjectTimeUpdate = options.onRenderObjectTimeUpdate;
     this.onFinish = options.onFinish;
+    this.playHandler = options.playHandler;
+    this.pauseHandler = options.pauseHandler;
 
     this.transitionTime = 0;
     if (options.transitionTime != null && typeof(options.transitionTime) == "number") {
@@ -44,24 +45,28 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.renderObjectTime = 0;
     this.contentTime = [];
     this.isVideoPlaying = false; // change name to isPlaying
+    this.sendPlayEvent = true; // we set this to true because we want the initial play event to fire
+    this.sendPauseEvent = false; // we set this to false because we don't know if the first pause will be done by the user or by the "system"
 
     // --------------------------------------------------
     // "public" methods
     // --------------------------------------------------
 
     this.play = function () {
-        if (self.videoObjects[self.currentVideoIndex].readyState > 1) {
+        if (self.isVideoReady) {
+            self.sendPlayEvent = true;
             self.videoObjects[self.currentVideoIndex].style.opacity = "1";
             self.videoObjects[self.currentVideoIndex].play();
             this.isVideoPlaying = true;
         } else {
             this.onLoadError("video not ready");
-            self.videoObjects[self.currentVideoIndex].load();
         }
+
     }
 
     this.pause = function () {
         if (!this.videoObjects[self.currentVideoIndex].paused) {
+            self.sendPauseEvent = true;
             this.videoObjects[self.currentVideoIndex].pause();
         }
         if ((self.currentVideoIndex + 1) < self.videoObjects.length) {
@@ -126,24 +131,34 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         {
             self.currentVideoIndex = clipIndex;
 
-            // else, remove all videos, load the clip that we want
-            // while (self.videoContainer.lastChild)
-            // {
-            //     // self.videoContainer.removeChild(self.videoContainer.lastChild);
-            // }
+            //else, remove all videos, load the clip that we want
+            while (self.videoContainer.lastChild)
+            {
+                self.videoContainer.removeChild(self.videoContainer.lastChild);
+            }
 
             for (var i = clipIndex; i < self.renderObj.EDL.length; i++) {
                 self.videoObjects[i].style.opacity = 0;
-                // self.videoContainer.insertBefore(self.videoObjects[i], self.videoContainer.firstChild);
             };
 
-            self.videoObjects[clipIndex].load();
+            if (!self.videoObjects[clipIndex]) {
+                self.createVideo[clipIndex];
+            }
+            self.videoContainer.insertBefore(self.videoObjects[clipIndex], self.videoContainer.firstChild);
             if ((clipIndex + 1) < self.videoObjects.length) {
-                self.videoObjects[clipIndex + 1].load();
-                console.log(self.videoObjects[clipIndex + 1]);
+                if (!self.videoObjects[clipIndex + 1]) {
+                    self.createVideo[clipIndex + 1];
+                }
+                self.videoContainer.insertBefore(self.videoObjects[clipIndex + 1], self.videoContainer.firstChild);
             }
 
             self.videoObjects[clipIndex].style.opacity = 1;
+
+            if (self.isVideoPlaying && videoId == self.currentVideoIndex)
+            {
+                // when seeking, we may need to play the first video element
+                self.videoObjects[videoId].play();
+            }
         }
     }
 
@@ -181,7 +196,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         videoElement.setAttribute('src', content.url + timeString);
 
         // videoElement.setAttribute('controls', true);
-        videoElement.setAttribute('preload', "none");
+        videoElement.setAttribute('preload', "auto");
 
         videoElement.style.position = "absolute";
         videoElement.style.opacity = "0";
@@ -232,44 +247,43 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
             document.getElementById("video-" + self.elementId + "-" + self.currentVideoIndex).style.opacity = "1";
             self.onReady();
         }
-
-        if (self.isVideoPlaying && videoId == self.currentVideoIndex)
-        {
-            // when seeking, we may need to play the first video element
-            self.videoObjects[videoId].play();
-        }
     }
 
     this.onPlay = function() {
-        console.log("onPlay");
+        if (self.playHandler && self.sendPlayEvent)
+        {
+            self.playHandler();
+        }
+        self.sendPlayEvent = false;
     }
 
     this.onPause = function() {
         // this function is called when the video reaches the point in time when it is supposed to stop, or when it reaches the end of the video
 
-        console.log("onPause");
-        // console.log ("currentVideoIndex = " + self.currentVideoIndex); 
-        // console.log ("self.renderObj.EDL.length= " + self.renderObj.EDL.length);
-        // console.log ("self.renderObj.EDL[self.currentVideoIndex].endTime= " + self.renderObj.EDL[self.currentVideoIndex].endTime); 
-        // console.log ("this.currentTime = " + self.currentTime());
-        // console.log ("video currentTime = " + document.getElementById("video-" + self.elementId + "-" + self.currentVideoIndex).currentTime);
+        if (self.pauseHandler && self.sendPauseEvent)
+        {
+            self.pauseHandler();
+        }
+        self.sendPauseEvent = false;
 
         var videoId = parseInt(this.id.replace("video-" + self.elementId + "-", ""));
-        if (self.renderObj.EDL[videoId].endTime <= this.currentTime) {
- 
+        if (self.renderObj.EDL[videoId].endTime <= this.currentTime)
+        {
+            this.style.opacity = "0"; 
+            this.remove(); // should move to a transition handler
+            self.videoObjects[self.currentVideoIndex] = null; // with a large number of videos, if we don't do this then the video playback will eventually start to hitch
+
             self.currentVideoIndex++;
 
-            this.style.opacity = "0"; 
-            // this.remove(); // should move to a transition handler
-
             if (self.renderObj.EDL.length > self.currentVideoIndex) {
-                var videoElement2 = self.videoObjects[self.currentVideoIndex];
-                videoElement2.load();
-                videoElement2.style.opacity = "1";
+                self.videoObjects[self.currentVideoIndex].style.opacity = "1";
                 self.videoObjects[self.currentVideoIndex].play();
 
                 if (self.renderObj.EDL.length > self.currentVideoIndex + 1) {
-                    self.videoObjects[self.currentVideoIndex + 1].load();
+                    if (!self.videoObjects[self.currentVideoIndex + 1]) {
+                        self.createVideo(self.currentVideoIndex + 1);
+                    }
+                    self.videoContainer.insertBefore(self.videoObjects[self.currentVideoIndex + 1], self.videoContainer.firstChild);
                 }
 
             }
@@ -306,15 +320,14 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         return;
     }
 
-    for (var i = 0; i < self.renderObj.EDL.length; i++) {
+    for (var i = 0; i < 2; i++) {
         self.createVideo(i);
-        self.videoContainer.insertBefore(self.videoObjects[i], self.videoContainer.firstChild);
     };
 
     // I don't know if this can be moved up before the methods or not
     // this.loadVideoElement(0); // what is this for????
-    this.videoObjects[0].load();
-    this.videoObjects[1].load();
+    self.videoContainer.insertBefore(self.videoObjects[0], self.videoContainer.firstChild);
+    self.videoContainer.insertBefore(self.videoObjects[1], self.videoContainer.firstChild);
 
     //--------------------------------------------------
 }

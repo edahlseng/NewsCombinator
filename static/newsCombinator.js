@@ -87,7 +87,7 @@ function setupVideoPlayer()
         temporaryBackground.style.visibility = "hidden";
 
         // start the video
-		// player.play();
+		player.play();
 		
 		// start the timer for hiding all of the unwanted controls
 		mouseMove();
@@ -105,15 +105,43 @@ function setupVideoPlayer()
         mouseMove();
     }
 
+    function playHandler() {
+    	var playedElement = document.getElementById('played');
+    	playedElement.style.webkitTransition = "";
+    	playedElement.style.opacity = 1;
+    	playedElement.style.visibility = "visible";
+    	playedElement.style.webkitTransition = "opacity .3s, visibility .3s";
+    	
+    	setTimeout(function() {
+    		playedElement.style.opacity = 0;
+    		playedElement.style.visibility = "hidden";
+    	}, 1000);
+    }
+
+    function pauseHandler() {
+    	var pausedElement = document.getElementById('paused');
+    	pausedElement.style.webkitTransition = "";
+    	pausedElement.style.opacity = 1;
+    	pausedElement.style.visibility = "visible";
+    	pausedElement.style.webkitTransition = "opacity .3s, visibility .3s";
+    	
+    	setTimeout(function() {
+    		pausedElement.style.opacity = 0;
+    		pausedElement.style.visibility = "hidden";
+    	}, 1000);
+    }
+
     console.log('okay');
     player = new UMVideoPlayer("um_video_player_wrapper", response.renderObject, {
         "onReady" : onReady, 
         "onLoadError" : onLoadError, 
         "onTimeUpdate" : onTimeUpdate, 
         "onFinish" : onFinish,
+        "playHandler" : playHandler,
+        "pauseHandler" : pauseHandler,
         "transitionTime" : .3,
         "classString" : "um-videoPlayer",
-        "autoReload" : false
+        "autoReload" : false,
     });
 	
 	
