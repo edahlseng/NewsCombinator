@@ -2,9 +2,18 @@
 <html>
 	<head>
 		<title>NewsCombinator</title>
+
+		<!-- Sry bb, jquery -->
+		<!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+
+		<!-- tooltips -->
+		<link rel="stylesheet" type="text/css" href="/static/tooltips.css" />
+    	<script type="text/javascript" src="/static/tooltips.js"></script>
+
 		<link rel="stylesheet" href="/static/newsCombinator.css"></link>
 		<script src="/static/newsCombinator.js"></script>
 		<script src="/static/um-video-player.js"></script>
+
 	</head>
 	<body>
 		<!-- Placeholder for video player -->
@@ -14,8 +23,8 @@
 
 		<div id="timeSelectionContainer">
 			<div id="descriptionContainer">
-				<p class="description">Spend time watching. Not searching.</p>
-				<p class="description">How much time do you have?</p>
+				<h1 class="description">Spend time watching. Not searching.</h1>
+				<h2 class="description">How much time do you have?</h2>
 			</div>
 			<div id="timeButtonContainer">
 				<button class="timeButton" id="few" onclick=timeSelected()>A few min</button>

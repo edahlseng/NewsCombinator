@@ -2,6 +2,14 @@ var player;
 var currentRenderObject;
 var hideControlsTimer;
 
+// var tips = new Tooltips(document, {
+// 	tooltip:    {},          // Options for individual Tooltip instances.
+// 	key:       'tooltip',    // Tooltips data attribute key.
+// 	showOn:    'mouseenter', // Show tooltip event.
+// 	hideOn:    'mouseleave', // Hide tooltip event.
+// 	observe:   0             // Enable mutation observer (used only when supported).
+// });
+
 function timeSelected()
 {
 	if (player)
@@ -60,8 +68,12 @@ function setupVideoPlayer()
 		videoElement.setAttribute('class', 'video');
 		videoElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
 		videoElement.appendChild(thumbnailContainer);
+		videoElement.setAttribute('data-tooltip', currentRenderObject.EDL[i].title + "");
 
 		playlistContainer.appendChild(videoElement);
+		// tips.add(videoElement);
+		// tips.reload();
+
 	}
 
 	// ----------------------
