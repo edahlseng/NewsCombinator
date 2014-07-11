@@ -86,14 +86,18 @@ function setupVideoPlayer()
         var controlsContainer = document.getElementById('controlsContainer');
 
         timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s";
-        descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
+        // descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
         temporaryBackground.style.webkitTransition = "opacity 1s, visibility 1s";
         controlsContainer.style.webkitTransition = "opacity 1s";
 
-        timeSelectionContainer.style.maxWidth = "100%";
+        // timeSelectionContainer.style.maxWidth = "100%";
         timeSelectionContainer.style.marginTop = "0";
+        timeSelectionContainer.style.padding = "0";
+        timeSelectionContainer.style.webkitTransform = "translateY(0%)";
         descriptionContainer.style.height = "0";
         descriptionContainer.style.opacity = 0;
+        timeButtonContainer.style.background = "rgba(0,0,0,.5)";
+
         temporaryBackground.style.opacity = 0;
         temporaryBackground.style.visibility = "hidden";
         controlsContainer.style.visibility = "visible";
