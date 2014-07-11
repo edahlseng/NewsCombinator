@@ -51,8 +51,6 @@ function setupVideoPlayer()
 	var playlistContainer = document.getElementById('playlistContainer');
 	for (var i = 0; i < currentRenderObject.EDL.length; i++)
 	{
-		console.log(i);
-
 		var thumbnail = document.createElement('img');
 		thumbnail.setAttribute('src', currentRenderObject.EDL[i].thumbnail);
 
@@ -64,16 +62,17 @@ function setupVideoPlayer()
 		thumbnailContainer.appendChild(thumbnail);
 		thumbnailContainer.appendChild(title);
 
-		var videoElement = document.createElement('div');
-		videoElement.setAttribute('class', 'video');
-		videoElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
-		videoElement.appendChild(thumbnailContainer);
-		videoElement.setAttribute('data-tooltip', currentRenderObject.EDL[i].title + "");
+		var clipElement = document.createElement('div');
+		clipElement.setAttribute('class', 'video');
+		clipElement.setAttribute('id', 'clip' + i);
+		clipElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
+		clipElement.appendChild(thumbnailContainer);
+		clipElement.addEventListener('click', clipClicked);
+		clipElement.setAttribute('data-tooltip', currentRenderObject.EDL[i].title + "");
 
-		playlistContainer.appendChild(videoElement);
-		// tips.add(videoElement);
+		playlistContainer.appendChild(clipElement);
+				// tips.add(videoElement);
 		// tips.reload();
-
 	}
 
 	// ----------------------
@@ -84,10 +83,12 @@ function setupVideoPlayer()
         var timeSelectionContainer = document.getElementById('timeSelectionContainer');
         var descriptionContainer = document.getElementById('descriptionContainer');
         var temporaryBackground = document.getElementById('temporaryBackground');
+        var controlsContainer = document.getElementById('controlsContainer');
 
         timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s";
         descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
         temporaryBackground.style.webkitTransition = "opacity 1s, visibility 1s";
+        controlsContainer.style.webkitTransition = "opacity 1s";
 
         timeSelectionContainer.style.maxWidth = "100%";
         timeSelectionContainer.style.marginTop = "0";
@@ -95,6 +96,8 @@ function setupVideoPlayer()
         descriptionContainer.style.opacity = 0;
         temporaryBackground.style.opacity = 0;
         temporaryBackground.style.visibility = "hidden";
+        controlsContainer.style.visibility = "visible";
+        controlsContainer.style.opacity = 1;
 
         // start the video
 		player.play();
@@ -115,15 +118,42 @@ function setupVideoPlayer()
         mouseMove();
     }
 
-    console.log('okay');
+    function playHandler() {
+    	var playedElement = document.getElementById('played');
+    	playedElement.style.webkitTransition = "";
+    	playedElement.style.opacity = 1;
+    	playedElement.style.visibility = "visible";
+    	playedElement.style.webkitTransition = "opacity .3s, visibility .3s";
+    	
+    	setTimeout(function() {
+    		playedElement.style.opacity = 0;
+    		playedElement.style.visibility = "hidden";
+    	}, 1000);
+    }
+
+    function pauseHandler() {
+    	var pausedElement = document.getElementById('paused');
+    	pausedElement.style.webkitTransition = "";
+    	pausedElement.style.opacity = 1;
+    	pausedElement.style.visibility = "visible";
+    	pausedElement.style.webkitTransition = "opacity .3s, visibility .3s";
+    	
+    	setTimeout(function() {
+    		pausedElement.style.opacity = 0;
+    		pausedElement.style.visibility = "hidden";
+    	}, 1000);
+    }
+
     player = new UMVideoPlayer("um_video_player_wrapper", response.renderObject, {
         "onReady" : onReady, 
         "onLoadError" : onLoadError, 
         "onTimeUpdate" : onTimeUpdate, 
         "onFinish" : onFinish,
+        "playHandler" : playHandler,
+        "pauseHandler" : pauseHandler,
         "transitionTime" : .3,
         "classString" : "um-videoPlayer",
-        "autoReload" : false
+        "autoReload" : false,
     });
 	
 	
@@ -151,4 +181,11 @@ function mouseMove()
 			document.body.style.cursor = "none";
 		}, 3000);
 	}
+}
+
+function clipClicked(e)
+{
+	var clipIndex = parseInt(this.id.substring(4));
+	console.log(clipIndex);
+	player.seekToClipIndex(clipIndex);
 }

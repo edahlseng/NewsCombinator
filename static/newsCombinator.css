@@ -29,7 +29,9 @@ body {
 	width: 100%;
 	height: 100%;
 	z-index: 1;
-	background: white;
+	background-image: url("/static/the-newsroom-4.jpg");
+	background-size: cover;
+	-webkit-filter: blur(25px);
 }
 
 /*************************************/
@@ -42,6 +44,8 @@ body {
 	width: 100%;
 	z-index: 0;
 	background: blue;
+	visibility: hidden;
+	opacity: 0;
 }
 
 #progressSlider {
@@ -58,7 +62,7 @@ body {
 .video {
 	display: inline-block;
 	overflow: hidden;
-}
+	cursor: pointer;
 
 .thumbnailContainer img {
 /*	max-width: 128px;
@@ -73,6 +77,38 @@ body {
 	visibility: hidden;
 }
 
+#played {
+	position: absolute;
+	width: 10%;
+	height: 10%;
+	left: 50%;
+	top: 50%;
+	margin-left: -5%;
+	margin-top: -5%;
+	background: rgba(0, 0, 0, .7);
+	color: white;
+	visibility: hidden;
+
+	font-size: 72px;
+	text-align: center;
+}
+
+#paused {
+	position: absolute;
+	width: 10%;
+	height: 10%;
+	left: 50%;
+	top: 50%;
+	margin-left: -5%;
+	margin-top: -5%;
+	background: rgba(0, 0, 0, .7);
+	color: white;
+	visibility: hidden;
+
+	font-size: 72px;
+	text-align: center;
+}
+
 /****************************************/
 /* Time selection/Welcome screen */
 /****************************************/
@@ -82,7 +118,7 @@ body {
 	margin: 40px auto 0 auto;
 	max-width: 1240px;
 	z-index: 1;
-	background: red;
+	text-align: center;
 }
 
 #descriptionContainer {
@@ -97,9 +133,19 @@ h1, h2 {
 	margin-top: 0;
 }
 
+#title {
+	margin-bottom: 60px;
+	font-size: 3em;
+}
+
+#subtitle {
+	margin-bottom: 25px;
+	font-size: 2em;
+}
+
 #timeButtonContainer {
 	width: 100%;
-	height: 30px;
+	height: 44px;
 }
 
 .timeButton {
@@ -107,10 +153,15 @@ h1, h2 {
 	height: 100%;
 	margin: 0 0;
 	float: left; /* eliminate the spaces between buttons */
-	border-width: 1px;
+	font-size: 15px;
+	border-width: 1px 0px 1px 1px;
 	border-style: solid;
 	border-color: black;
 	outline: none; /* get rid of the the glow around buttons when clicked */
+}
+
+.timeButton:last-child {
+	border-width: 1px;
 }
 
 .timeButton:active {
