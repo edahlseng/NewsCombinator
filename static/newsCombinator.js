@@ -43,8 +43,6 @@ function setupVideoPlayer()
 	var playlistContainer = document.getElementById('playlistContainer');
 	for (var i = 0; i < currentRenderObject.EDL.length; i++)
 	{
-		console.log(i);
-
 		var thumbnail = document.createElement('img');
 		thumbnail.setAttribute('src', currentRenderObject.EDL[i].thumbnail);
 
@@ -74,10 +72,12 @@ function setupVideoPlayer()
         var timeSelectionContainer = document.getElementById('timeSelectionContainer');
         var descriptionContainer = document.getElementById('descriptionContainer');
         var temporaryBackground = document.getElementById('temporaryBackground');
+        var controlsContainer = document.getElementById('controlsContainer');
 
         timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s";
         descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
         temporaryBackground.style.webkitTransition = "opacity 1s, visibility 1s";
+        controlsContainer.style.webkitTransition = "opacity 1s";
 
         timeSelectionContainer.style.maxWidth = "100%";
         timeSelectionContainer.style.marginTop = "0";
@@ -85,6 +85,8 @@ function setupVideoPlayer()
         descriptionContainer.style.opacity = 0;
         temporaryBackground.style.opacity = 0;
         temporaryBackground.style.visibility = "hidden";
+        controlsContainer.style.visibility = "visible";
+        controlsContainer.style.opacity = 1;
 
         // start the video
 		player.play();
@@ -131,7 +133,6 @@ function setupVideoPlayer()
     	}, 1000);
     }
 
-    console.log('okay');
     player = new UMVideoPlayer("um_video_player_wrapper", response.renderObject, {
         "onReady" : onReady, 
         "onLoadError" : onLoadError, 
