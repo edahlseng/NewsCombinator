@@ -172,7 +172,7 @@ function setupVideoPlayer()
     	}
 
     	var percent = player.currentTime() / duration;
-    	sliderPosition.style.left = (percent * progressSlider.clientWidth) + 'px';
+    	sliderPosition.style.left = (percent * (progressSlider.clientWidth - sliderPosition.clientWidth)) + 'px';
     }
 
     player = new UMVideoPlayer("um_video_player_wrapper", response.renderObject, {
