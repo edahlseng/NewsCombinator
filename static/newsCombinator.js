@@ -2,6 +2,14 @@ var player;
 var currentRenderObject;
 var hideControlsTimer;
 
+// var tips = new Tooltips(document, {
+// 	tooltip:    {},          // Options for individual Tooltip instances.
+// 	key:       'tooltip',    // Tooltips data attribute key.
+// 	showOn:    'mouseenter', // Show tooltip event.
+// 	hideOn:    'mouseleave', // Hide tooltip event.
+// 	observe:   0             // Enable mutation observer (used only when supported).
+// });
+
 function timeSelected()
 {
 	if (player)
@@ -60,8 +68,11 @@ function setupVideoPlayer()
 		clipElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
 		clipElement.appendChild(thumbnailContainer);
 		clipElement.addEventListener('click', clipClicked);
+		clipElement.setAttribute('data-tooltip', currentRenderObject.EDL[i].title + "");
 
 		playlistContainer.appendChild(clipElement);
+				// tips.add(videoElement);
+		// tips.reload();
 	}
 
 	// ----------------------
@@ -75,14 +86,18 @@ function setupVideoPlayer()
         var controlsContainer = document.getElementById('controlsContainer');
 
         timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s";
-        descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
+        // descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
         temporaryBackground.style.webkitTransition = "opacity 1s, visibility 1s";
         controlsContainer.style.webkitTransition = "opacity 1s";
 
-        timeSelectionContainer.style.maxWidth = "100%";
+        // timeSelectionContainer.style.maxWidth = "100%";
         timeSelectionContainer.style.marginTop = "0";
+        timeSelectionContainer.style.padding = "0";
+        timeSelectionContainer.style.webkitTransform = "translateY(0%)";
         descriptionContainer.style.height = "0";
         descriptionContainer.style.opacity = 0;
+        timeButtonContainer.style.background = "rgba(0,0,0,.5)";
+
         temporaryBackground.style.opacity = 0;
         temporaryBackground.style.visibility = "hidden";
         controlsContainer.style.visibility = "visible";
