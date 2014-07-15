@@ -120,10 +120,10 @@ body {
 	margin: 0px auto;
 	position: relative;
 	width: 50%;
-	top: 50%;
+	/*top: 50%;*/
 	z-index: 1;
 	text-align: center;
-	padding: 50px;
+	/*padding: 50px;*/
 	-webkit-transform: translateY(90%);
 	-ms-transform: translateY(90%);
 	transform: translateY(90%);
