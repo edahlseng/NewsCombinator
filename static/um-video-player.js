@@ -1,10 +1,10 @@
 // TODO:
 //
 // future: better support for transitions, 
-// adding support for a scrubber through the whole concat ro
-// etc.
+// adding support for a scrubber through the whole concat
 // fullscreen support
 // better controls
+// reimplement autoreload feature
 
 
 function UMVideoPlayer(wrapperId, renderObject, options) {
@@ -20,6 +20,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.onLoadError = options.onLoadError;
     this.onRenderObjectTimeUpdate = options.onRenderObjectTimeUpdate;
     this.onFinish = options.onFinish;
+    this.durationLoadedHandler = options.durationLoadedHandler;
     this.playHandler = options.playHandler;
     this.pauseHandler = options.pauseHandler;
 
@@ -47,6 +48,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.isVideoPlaying = false; // change name to isPlaying
     this.sendPlayEvent = true; // we set this to true because we want the initial play event to fire
     this.sendPauseEvent = false; // we set this to false because we don't know if the first pause will be done by the user or by the "system"
+    this.durationLoadingVideo = null; // we use this variable to hold videos that we are only loading metadata for in order to calculate the total duration
 
     // --------------------------------------------------
     // "public" methods
@@ -89,10 +91,40 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         }
     }
 
+    this.loadDuration = function () {
+        for (var i = 0; i < self.renderObj.EDL.length; i++) {
+            if (!self.renderObj.EDL[i].endTime) {                
+                self.durationLoadingVideo = createVideo(i, "metadata");
+                return; // return so that we don't call onDurationLoaded                
+            }
+        }
+
+        self.onDurationLoaded();
+    }
+
     this.duration = function() {
-        // TODO:
-        //
-        // implement this method
+        var duration = 0; 
+        for (var i = 0; i < self.renderObj.EDL.length; i++) {
+            var endTime;
+            if (self.renderObj.EDL[i].endTime)
+            {
+                endTime = self.renderObj.EDL[i].endTime;
+            }
+            else {
+                console.log('ERROR: duration has not yet been calculated.  You must first call player.loadDuration(), or set the "automatically loads duration" option to true when creating the player object.');
+                break;
+            }
+
+            var startTime = 0;
+            if (self.renderObj.EDL[i].startTime)
+            {
+                startTime = self.renderObj.EDL[i].startTime;
+            }
+
+            duration += endTime - startTime;
+        }
+
+        return duration;
     }
 
     this.currentTime = function () {
@@ -177,7 +209,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         return text;
     }
 
-    this.createVideo = function (clipIndex) {
+    this.createVideo = function (clipIndex, preloadStyle) {
 
         var content = this.renderObj.EDL[clipIndex];
 
@@ -195,8 +227,8 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         }
         videoElement.setAttribute('src', content.url + timeString);
 
-        // videoElement.setAttribute('controls', true);
-        videoElement.setAttribute('preload', "auto");
+        preloadStyle = (typeof preloadStyle == "undefined") ? "auto" : preloadStyle;
+        videoElement.setAttribute('preload', preloadStyle);
 
         videoElement.style.position = "absolute";
         videoElement.style.opacity = "0";
@@ -208,22 +240,57 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         videoElement.addEventListener("pause", self.onPause);
         videoElement.addEventListener("timeupdate", self.onTimeUpdate);
 
-        self.videoObjects[clipIndex] = videoElement;
+
+        return videoElement;
     }  
 
+    this.onDurationLoaded = function () {
+        if (self.durationLoadedHandler) {
+            self.durationLoadedHandler();
+        }
+    }
 
     // =================================
     // internal video element callbacks
     // =================================
 
     this.onMetadataLoaded = function() {
-                
         var elementId = this.id;
         var videoId = parseInt(elementId.replace("video-" + self.elementId + "-", ""));
 
         if (videoId == null || videoId < 0) {
-            self.onLoadError("Something wrong with video element...");
+            self.onLoadError("Something wrong with a video element...");
             return;
+        }
+
+        // check to see if the purpose of this video is to just grab the duration
+        if (this == self.durationLoadingVideo)
+        {
+            // add the endTime to the render object
+            if (this.duration) {
+                self.renderObj.EDL[videoID].endTime = this.duration;
+            } else {
+                self.onLoadError("At least one of the clips is preventing the duration from being fully calculated.")
+            }
+
+            // check to see if we might need to load the duration for another clip
+            if (videoID != (self.renderObj.EDL.length - 1))
+            {
+                // go throught and create the next video to load metadata
+                for (var i = 0; i < self.renderObj.EDL.length; i++)
+                {
+                    if (!self.renderObj.EDL[i].endTime)
+                    {
+                        self.durationLoadingVideo = createVideo(i, "metadata");
+                        return; // return so that we don't call onDurationLoaded
+                    }
+
+                }
+            }
+            
+            delete self.durationLoadingVideo;
+            self.durationLoadingVideo = undefined;
+            self.onDurationLoaded();
         }
 
         // self.currentTime(self.renderObj.EDL[videoId].startTime);
@@ -281,7 +348,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
 
                 if (self.renderObj.EDL.length > self.currentVideoIndex + 1) {
                     if (!self.videoObjects[self.currentVideoIndex + 1]) {
-                        self.createVideo(self.currentVideoIndex + 1);
+                        self.videoObjects[self.currentVideoIndex + 1] = self.createVideo(self.currentVideoIndex + 1);
                     }
                     self.videoContainer.insertBefore(self.videoObjects[self.currentVideoIndex + 1], self.videoContainer.firstChild);
                 }
@@ -320,8 +387,12 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         return;
     }
 
+    if (this.automaticallyLoadDuration) {
+        this.loadDuration();
+    }
+
     for (var i = 0; i < 2; i++) {
-        self.createVideo(i);
+        self.videoObjects[i] = self.createVideo(i);
     };
 
     // I don't know if this can be moved up before the methods or not
