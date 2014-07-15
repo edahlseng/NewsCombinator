@@ -12,7 +12,7 @@
 
 		<link rel="stylesheet" href="/static/newsCombinator.css"></link>
 		<script src="/static/newsCombinator.js"></script>
-		<script src="/static/um-video-player.js"></script>
+		<script src="/static/um-videoPlayer.js"></script>
 
 	</head>
 	<body>
@@ -20,8 +20,10 @@
     	<div id="um_video_player_wrapper" onclick=videoClicked() onmousemove=mouseMove()></div>
 		
     	<div id="controlsContainer">
-			<div id="progressSlider"></div> <!-- progressSlider -->
-			<div id="playlistContainer"></div> <!-- thumbnailCarousel -->
+			<div id="progressSlider">
+				<div id="sliderPosition"></div>
+			</div>
+			<div id="playlistContainer"></div>
 		</div>
 
     	<div id="temporaryBackground"></div>

@@ -2,6 +2,12 @@ var player;
 var currentRenderObject;
 var hideControlsTimer;
 
+// we want these variables to be public because we will access this element very frequently.
+// We don't want them to be computed each time they are needed
+var progressSlider;
+var sliderPosition;
+var duration; // this one shouldn't be needed in the future.  Update um-videoPlayer.js
+
 // var tips = new Tooltips(document, {
 // 	tooltip:    {},          // Options for individual Tooltip instances.
 // 	key:       'tooltip',    // Tooltips data attribute key.
@@ -16,6 +22,7 @@ function timeSelected()
 	{
 		// if a video is already playing we should pause it while we prepare and load the next videos
 		delete player;
+		player = undefined;
 
 		// remove any currently existing video elements
 		videoContainer = document.getElementById('um_video_player_wrapper');
@@ -84,17 +91,19 @@ function setupVideoPlayer()
         var descriptionContainer = document.getElementById('descriptionContainer');
         var temporaryBackground = document.getElementById('temporaryBackground');
         var controlsContainer = document.getElementById('controlsContainer');
+        progressSlider = document.getElementById('progressSlider');
+        sliderPosition = document.getElementById('sliderPosition');
 
-        timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s";
+        timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s, visibility 1s";
         // descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
         temporaryBackground.style.webkitTransition = "opacity 1s, visibility 1s";
-        controlsContainer.style.webkitTransition = "opacity 1s";
+        controlsContainer.style.webkitTransition = "opacity 1s, visibility 1s";
 
         // timeSelectionContainer.style.maxWidth = "100%";
         timeSelectionContainer.style.marginTop = "0";
         timeSelectionContainer.style.padding = "0";
         timeSelectionContainer.style.webkitTransform = "translateY(0%)";
-        descriptionContainer.style.height = "0";
+        descriptionContainer.style.height = 0;
         descriptionContainer.style.opacity = 0;
         timeButtonContainer.style.background = "rgba(0,0,0,.5)";
 
@@ -120,6 +129,12 @@ function setupVideoPlayer()
 
     function onFinish() {
         mouseMove();
+    }
+
+    function durationLoadedHandler() {
+    	if (player) {
+    		duration = player.duration();
+    	}
     }
 
     function playHandler() {
@@ -148,16 +163,31 @@ function setupVideoPlayer()
     	}, 1000);
     }
 
+    function timeUpdateHandler() {
+    	// this shouldn't be needed in the future
+    	// need to update um-videoPlayer.js
+        
+    	if (!duration) {
+    		duration = player.duration();
+    	}
+
+    	var percent = player.currentTime() / duration;
+    	sliderPosition.style.left = (percent * progressSlider.clientWidth) + 'px';
+    }
+
     player = new UMVideoPlayer("um_video_player_wrapper", response.renderObject, {
         "onReady" : onReady, 
         "onLoadError" : onLoadError, 
         "onTimeUpdate" : onTimeUpdate, 
         "onFinish" : onFinish,
+        "durationLoadedHandler" : durationLoadedHandler,
         "playHandler" : playHandler,
         "pauseHandler" : pauseHandler,
+        "timeUpdateHandler" : timeUpdateHandler,
         "transitionTime" : .3,
         "classString" : "um-videoPlayer",
         "autoReload" : false,
+        "autoLoadDuration" : true,
     });
 	
 	
@@ -173,15 +203,22 @@ function mouseMove()
 {
 	clearTimeout(hideControlsTimer);
 	var timeSelectionContainer = document.getElementById('timeSelectionContainer');
-	timeSelectionContainer.style.opacity = "1";
+	var controlsContainer = document.getElementById('controlsContainer');
+	timeSelectionContainer.style.opacity = 1;
+	controlsContainer.style.opacity = 1;
+	timeSelectionContainer.style.visibility = "visible";
+	controlsContainer.style.visibility = "visible";
 	document.body.style.cursor = "auto";
-
 
 	if (player && player.isVideoPlaying)
 	{
 		hideControlsTimer = setTimeout(function () {
 			var containerToHide = document.getElementById('timeSelectionContainer');
-			containerToHide.style.opacity = "0";
+			var secondContainerToHide = document.getElementById('controlsContainer');
+			containerToHide.style.opacity = 0;
+			secondContainerToHide.style.opacity = 0;
+			containerToHide.style.visibility = "hidden";
+			secondContainerToHide.style.visibility = "hidden";
 			document.body.style.cursor = "none";
 		}, 3000);
 	}
