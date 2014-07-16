@@ -125,6 +125,9 @@ function setupVideoPlayer()
 
         // start the video
 		player.play();
+
+        //load tooltips
+        $( document ).tooltip();
 		
 		// start the timer for hiding all of the unwanted controls
 		mouseMove();
