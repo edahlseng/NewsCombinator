@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="recapLogo" viewBox="0 0 80 80" height="80" width="80">
+	<circle cx="40" cy="45" r="30" stroke="#000000" stroke-width="2.5" fill="transparent"/>
+
+	<rect x="13.5" y="20.5" rx=".1" ry=".1" width="6" height="6" stroke-width="1.75" transform="rotate(-42 13.5 20.5)" stroke="#000000" fill="transparent"/>
+
+	<rect x="36" y="6" rx="1.5" ry="1.5" width="8.0" height="10" fill="#000000" />
+
+	<path d="M40,45 L62,32.5 M40,45 L47.5,58" stroke="#000000" stroke-width="3.0" stroke-linecap="round"/>
+</svg>

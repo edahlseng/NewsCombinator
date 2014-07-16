@@ -8,8 +8,8 @@ app = Flask(__name__)
 app.debug=True
 
 @app.route('/')
-def newsCombinator():
-    return render_template('newsCombinator.html')
+def recap():
+    return render_template('recap.html')
 
 @app.route('/renderObjectForTimeAvailable')
 def renderObjectForTimeAvailable():
@@ -64,6 +64,6 @@ def renderObjectForTimeAvailable():
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print "USAGE: python newsCombinator.py [port #]"
+        print "USAGE: python recap.py [port #]"
     else:
         app.run(port = int(sys.argv[1])) # run on the specified port number

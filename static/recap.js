@@ -91,13 +91,17 @@ function setupVideoPlayer()
         var descriptionContainer = document.getElementById('descriptionContainer');
         var temporaryBackground = document.getElementById('temporaryBackground');
         var controlsContainer = document.getElementById('controlsContainer');
+        var loadingLogo = document.getElementById('loadingLogo');
+        var clockMinuteHand = document.getElementById('clockMinuteHand');
+        var clockHourHand = document.getElementById('clockHourHand');
         progressSlider = document.getElementById('progressSlider');
         sliderPosition = document.getElementById('sliderPosition');
 
         timeSelectionContainer.style.webkitTransition = "max-width 1s, margin 1s, opacity .4s, visibility 1s";
         // descriptionContainer.style.webkitTransition = "height 1s, opacity 1s";
-        temporaryBackground.style.webkitTransition = "opacity 1s, visibility 1s";
-        controlsContainer.style.webkitTransition = "opacity 1s, visibility 1s";
+
+        clockMinuteHand.style.webkitAnimationPlayState = 'paused';
+        clockHourHand.style.webkitAnimationPlayState = 'paused';
 
         // timeSelectionContainer.style.maxWidth = "100%";
         timeSelectionContainer.style.marginTop = "0";
@@ -111,6 +115,8 @@ function setupVideoPlayer()
         temporaryBackground.style.visibility = "hidden";
         controlsContainer.style.visibility = "visible";
         controlsContainer.style.opacity = 1;
+        loadingLogo.style.opacity = 0;
+        loadingLogo.style.visibility = 'hidden';
 
         // start the video
 		player.play();
@@ -190,7 +196,18 @@ function setupVideoPlayer()
         "autoLoadDuration" : true,
     });
 	
-	
+	// start the loading animation
+    var clockMinuteHand = document.getElementById('clockMinuteHand');
+    var clockHourHand = document.getElementById('clockHourHand');
+    var loadingLogo = document.getElementById('loadingLogo');
+    clockMinuteHand.style.webkitAnimationPlayState = 'running';
+    clockHourHand.style.webkitAnimationPlayState = 'running';
+    loadingLogo.style.visibility = 'visible';
+    loadingLogo.style.opacity = 1;
+
+    // hide the time selection controls
+    var timeSelectionContainer = document.getElementById('timeSelectionContainer');
+    timeSelectionContainer.style.opacity = 0;
 }
 
 function videoClicked()

@@ -21,19 +21,6 @@ body {
 	height: 100%;
 }
 
-#temporaryBackground {
-	position: absolute;
-	margin: 0;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1;
-	background-image: url("/static/the-newsroom-4.jpg");
-	background-size: cover;
-	-webkit-filter: blur(25px);
-}
-
 /*************************************/
 /* Video controls */
 /*************************************/
@@ -46,6 +33,7 @@ body {
 	background: blue;
 	visibility: hidden;
 	opacity: 0;
+	-webkit-transition: opacity 1s, visibility 1s
 }
 
 #progressSlider {
@@ -89,39 +77,70 @@ body {
 
 #played {
 	position: absolute;
-	width: 10%;
-	height: 10%;
-	left: 50%;
-	top: 50%;
-	margin-left: -5%;
-	margin-top: -5%;
-	background: rgba(0, 0, 0, .7);
-	color: white;
+	width: 16%;
+	height: 16%;
+	left: 42%;
+	top: 42%;
 	visibility: hidden;
 
-	font-size: 72px;
-	text-align: center;
 }
 
 #paused {
 	position: absolute;
-	width: 10%;
-	height: 10%;
-	left: 50%;
-	top: 50%;
-	margin-left: -5%;
-	margin-top: -5%;
-	background: rgba(0, 0, 0, .7);
-	color: white;
+	width: 16%;
+	height: 16%;
+	left: 42%;
+	top: 42%;
 	visibility: hidden;
-
-	font-size: 72px;
-	text-align: center;
 }
 
 /****************************************/
 /* Time selection/Welcome screen */
 /****************************************/
+
+#temporaryBackground {
+	position: absolute;
+	margin: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-image: url("/static/the-newsroom-4.jpg");
+	background-size: cover;
+	-webkit-filter: blur(25px);
+	-webkit-transition: opacity 1s, visibility 1s;
+}
+
+#loadingLogo {
+	position: absolute;
+	left: 25%;
+	top: 25%;
+	width: 50%;
+	height: 50%;
+	stroke: white;
+	fill: white;
+	opacity: 0;
+	visibility: hidden;
+}
+
+/*#loadingLogo:hover {
+	-webkit-filter: blur(55px);
+	opacity: 0;
+}*/
+
+#clockMinuteHand {
+	-webkit-animation: spin 3s linear infinite;
+	-webkit-transform-origin: 0% 100%;
+	-webkit-animation-play-state: paused;
+}
+#clockHourHand {
+	-webkit-animation: spin 72s linear infinite;
+	-webkit-transform-origin: 0% 0%;
+	-webkit-animation-play-state: paused;
+}
+@-webkit-keyframes spin {
+	100% {-webkit-transform: rotate(360deg);}
+}
 
 #timeSelectionContainer {
 	position: relative;
@@ -137,6 +156,7 @@ body {
 	transform: translateY(90%);
 	color: white;
 	font-weight: 200;
+	-webkit-transition: opacity .4s, visibility .4s;
 }
 
 #descriptionContainer {
