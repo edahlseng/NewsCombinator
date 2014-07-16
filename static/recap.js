@@ -8,13 +8,25 @@ var progressSlider;
 var sliderPosition;
 var duration; // this one shouldn't be needed in the future.  Update um-videoPlayer.js
 
-// var tips = new Tooltips(document, {
-// 	tooltip:    {},          // Options for individual Tooltip instances.
-// 	key:       'tooltip',    // Tooltips data attribute key.
-// 	showOn:    'mouseenter', // Show tooltip event.
-// 	hideOn:    'mouseleave', // Hide tooltip event.
-// 	observe:   0             // Enable mutation observer (used only when supported).
-// });
+function verticallyCenter()
+{
+    //get window height
+    var w = window,
+        d = document,
+        e = d.documentElement,
+        g = d.getElementsByTagName('body')[0],
+        x = w.innerWidth || e.clientWidth || g.clientWidth,
+        y = w.innerHeight|| e.clientHeight|| g.clientHeight
+        title = document.getElementById('timeSelectionContainer');
+
+    if ((y - title.clientHeight) > 0) {
+            value = ((y - title.clientHeight)/2)
+            title.setAttribute("style", "margin-top:" + value.toString() + "px");
+        }
+
+    console.log("verticallyCenter");
+}
+// window.onresize = verticallyCenter;
 
 function timeSelected()
 {
@@ -72,14 +84,13 @@ function setupVideoPlayer()
 		var clipElement = document.createElement('div');
 		clipElement.setAttribute('class', 'video');
 		clipElement.setAttribute('id', 'clip' + i);
+        clipElement.setAttribute('title', currentRenderObject.EDL[i].trend)
 		clipElement.style.width = (100.0 / (currentRenderObject.EDL.length)) + '%';
 		clipElement.appendChild(thumbnailContainer);
 		clipElement.addEventListener('click', clipClicked);
-		clipElement.setAttribute('data-tooltip', currentRenderObject.EDL[i].title + "");
 
 		playlistContainer.appendChild(clipElement);
-				// tips.add(videoElement);
-		// tips.reload();
+
 	}
 
 	// ----------------------

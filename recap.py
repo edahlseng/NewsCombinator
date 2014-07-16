@@ -3,13 +3,14 @@ import sys                                          # for obtaining command line
 import json                                         # for creating json objects to send to client
 import math                                         # for performing calculations
 import urllib2                                      # for querying other sites for content
+from urlparse import urlparse
 
 app = Flask(__name__)
 app.debug=True
 
 @app.route('/')
-def newsCombinator():
-    return render_template('newsCombinator.html')
+def recap():
+    return render_template('recap.html')
 
 @app.route('/renderObjectForTimeAvailable')
 def renderObjectForTimeAvailable():
@@ -30,13 +31,36 @@ def renderObjectForTimeAvailable():
     # print trends
 
     videos = []
+    videoUrls = []
     for trend in trends:
         UM_QUERY_API = "http://um-query.media.mit.edu/search/"
         desiredTime = timeAvailable / len(trends)
         url = UM_QUERY_API + urllib2.quote(trend.encode('utf-8')) + '?duration=' + str(int(desiredTime))
         umQueryResponse = json.loads(urllib2.urlopen(url).read())
         if umQueryResponse["code"] == 0:
-            videos.append(umQueryResponse["results"][0])
+            # videos.append(umQueryResponse["results"][0])
+            totalMentions = 0
+            chosenVideo = None
+            for video in umQueryResponse["results"]:
+                if video['videoHigh']:
+                    parsed_uri = urlparse( video['videoHigh'] )
+                    domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+                    if domain != "http://um-helios.media.mit.edu:8686/": #make sure domain is not bad
+                        # videos.append(video)
+                        # break
+                        if video['transcript']: #check to see if there's a transcript
+                            transcript = video['transcript'] 
+                            count = transcript.count(trend)
+                            if count > totalMentions:
+                                if video['videoHigh'] not in videoUrls:
+                                    totalMentions = count
+                                    chosenVideo = video
+            if chosenVideo == None:
+                chosenVideo = umQueryResponse["results"][0]
+            chosenVideo['type'] = trend
+            videoUrls.append(chosenVideo['videoHigh'])
+            videos.append(chosenVideo)
+
 
 
     # generate the render object containing the playlist
@@ -44,7 +68,9 @@ def renderObjectForTimeAvailable():
 
     for video in videos:
 
-        url = video['videoHigh'] if video['videoHigh'] else ""
+
+        url = video['videoHigh'] # if video['videoHigh'] else ""
+        trend = video['type']
         startTime = video['startTime'] if video['startTime'] else ""
         endTime = video['endTime'] if video['endTime'] else ""
         title = video['creator'] if video['creator'] else ""
@@ -56,7 +82,8 @@ def renderObjectForTimeAvailable():
                 'startTime': startTime,
                 'endTime': endTime,
                 'title': title,
-                'thumbnail': thumbnail
+                'thumbnail': thumbnail,
+                'trend': trend
             })
 
     response = {'errorCode' : errorCode, 'renderObject' : renderObject}
@@ -64,6 +91,6 @@ def renderObjectForTimeAvailable():
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print "USAGE: python newsCombinator.py [port #]"
+        print "USAGE: python recap.py [port #]"
     else:
         app.run(port = int(sys.argv[1])) # run on the specified port number
