@@ -1,4 +1,4 @@
-NewsCombinator
+UM Recap
 ==============
 
 Setup
