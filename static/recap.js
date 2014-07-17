@@ -6,7 +6,6 @@ var hideControlsTimer;
 // We don't want them to be computed each time they are needed
 var progressSlider;
 var sliderPosition;
-var duration; // this one shouldn't be needed in the future.  Update um-videoPlayer.js
 
 function verticallyCenter()
 {
@@ -152,9 +151,7 @@ function setupVideoPlayer()
     }
 
     function durationLoadedHandler() {
-    	if (player) {
-    		duration = player.duration();
-    	}
+    	
     }
 
     function playHandler() {
@@ -184,14 +181,7 @@ function setupVideoPlayer()
     }
 
     function timeUpdateHandler() {
-    	// this shouldn't be needed in the future
-    	// need to update um-videoPlayer.js
-        
-    	if (!duration) {
-    		duration = player.duration();
-    	}
-
-    	var percent = player.currentTime() / duration;
+    	var percent = player.currentTime() / player.duration();
     	sliderPosition.style.left = (percent * (progressSlider.clientWidth - sliderPosition.clientWidth)) + 'px';
     }
 
