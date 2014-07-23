@@ -1,48 +1,38 @@
-// TODO:
+// Suggestions for possible future enhancements:
 //
-// future: better support for transitions, 
-// better controls in the demo page
-// wait to send durationLoaded callback until after the object has been fully created
-// add loading wheel
-// if seeking is in a video element that already exists, then just play it....will speed up seeking
-// fullscreen support
-// to note: clips 1 sec or less experience a delay, need to optimize, option to load X number of videos in advance to adjust accordingly
-
-
+// add support for a progress callback that indicates that more video content was loaded, along with a buffered property that represents the amount of video content that is buffered
+// maybe some fullscreen support
 
 function UMVideoPlayer(wrapperId, renderObject, options) {
     // helper variables
     var self = this;
     this.playerID = "UMVideoPlayer" + Math.round(Math.random() * (2000 - 1000) + 1000); // add a random number at the end in order to help prevent conflicting ID's with user defined elements
-
+    
+    // setup the container
     this.videoContainer = document.getElementById(wrapperId);
 
-    // event handlers
-    this.onReady = options.onReady;
-    this.onLoadError = options.onLoadError;
-    this.clipStartedHandler = options.clipStartedHandler;
-    this.durationLoadedHandler = options.durationLoadedHandler;
-    this.playHandler = options.playHandler;
-    this.pauseHandler = options.pauseHandler;
-    this.timeUpdateHandler = options.timeUpdateHandler;
-    this.onFinish = options.onFinish;
+    // assign options if necessarry
+    this.autoReload = true;
+    if (options.autoReload != null && typeof(options.autoReload) == "boolean") {
+        this.autoReload = options.autoReload;
+    }
 
+    this.classString = "";
+    if (options.classString != null && typeof(options.classString) == "string") {
+        this.classString = options.classString;
+    }
+
+    this.preloadAmount = 1;
+    if (options.preloadAmount != null && typeof(options.preloadAmount) == "number") {
+        this.preloadAmount = Math.max(1, Math.round(options.preloadAmount));
+    }
 
     this.transitionTime = 0;
     if (options.transitionTime != null && typeof(options.transitionTime) == "number") {
         this.transitionTime = options.transitionTime;
     }
 
-    this.classString = ""; //option= additional class tags
-    if (options.classString != null && typeof(options.classString) == "string") {
-        this.classString = options.classString;
-    }
-
-    this.autoReload = true;
-    if (options.autoReload != null && typeof(options.autoReload) == "boolean") {
-        this.autoReload = options.autoReload;
-    }
-
+    // private helper objects
     this.renderObject = null;
     this.currentClipIndex = 0;
     this.isVideoReady = false;
@@ -52,6 +42,21 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.sendPauseEvent = false; // we set this to false because we don't know if the first pause will be done by the user or by the "system"
     this.durationLoadingVideo = null; // we use this variable to hold videos that we are only loading metadata for in order to calculate the total duration
     this._duration;
+    this.loading = false;
+
+
+    // assign event handlers
+    this.clipStartedHandler = options.clipStartedHandler;
+    this.durationLoadedHandler = options.durationLoadedHandler;
+    this.finishedHandler = options.finishedHandler;
+    this.loadingErrorHandler = options.loadingErrorHandler;
+    this.loadingStartedHandler = options.loadingStartedHandler;
+    this.loadingStoppedHandler = options.loadingStoppedHandler;
+    this.playHandler = options.playHandler;
+    this.pauseHandler = options.pauseHandler;
+    this.timeUpdateHandler = options.timeUpdateHandler;
+    this.videoReadyHandler = options.videoReadyHandler;
+
 
     // --------------------------------------------------
     // "public" methods
@@ -64,7 +69,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
             self.videoObjects[self.currentClipIndex].play();
             this.isPlaying = true;
         } else {
-            this.onLoadError("video not ready");
+            this.loadingErrorHandler("video not ready");
         }
 
     }
@@ -186,12 +191,12 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         }
 
         // check to make sure that we (hopefully) correctly determined the clip to seek to
-        if (desiredClipIndex == null)
-        {
+        if (desiredClipIndex == null) {
             console.log("ERROR attempting to seek to requested time");
+            return;
         }
 
-        // determine what time in the determined clip we must seek to
+        // determine what time in the desired clip we must seek to
         var desiredClipTime = desiredSeconds - currentCalculatedDuration;
         desiredClipTime += self.renderObject.EDL[desiredClipIndex].startTime ? self.renderObject.EDL[desiredClipIndex].startTime : 0;
 
@@ -205,21 +210,30 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         {
             self.currentClipIndex = desiredClipIndex;
 
-            // remove all videos
+            // remove all videos from the container
             while (self.videoContainer.lastChild) {
                 self.videoContainer.removeChild(self.videoContainer.lastChild);
             }
+
+            // dispose of video elements that came before the desired clipIndex
             for (var i = 0; i < self.renderObject.EDL.length; i++) {
-                self.videoObjects[i] = null; // delete the video completely
+                if(i < clipIndex || !self.videoObjects[i] || self.videoObjects[i].readyState < 4) {
+                    self.videoObjects[i] = null;
+                }
             }
 
-            // load the initial videos (we need to move this to another method!)
+            // load the initial videos
             self.loadInitialElementsStartingAt(desiredClipIndex);
 
-            // set the seek time
+            // set the seek time, and show the first video element
             self.videoObjects[desiredClipIndex].currentTime = desiredClipTime;
-
             self.videoObjects[desiredClipIndex].style.opacity = 1;
+
+            // in the event that the desired video element already existed, we may need to start it
+            // a ready state of 4 means that the video element has loaded enough data to start playing
+            if (self.isPlaying && self.videoObjects[clipIndex].readyState == 4 && self.videoObjects[clipIndex].paused) {
+                self.videoObjects[clipIndex].play();
+            }
         }
     }
 
@@ -242,18 +256,27 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         {
             self.currentClipIndex = clipIndex;
 
-            // remove all videos
+            // remove all videos from the container
             while (self.videoContainer.lastChild) {
                 self.videoContainer.removeChild(self.videoContainer.lastChild);
             }
+
+            // dispose of video elements that came before the desired clipIndex
             for (var i = 0; i < self.renderObject.EDL.length; i++) {
-                self.videoObjects[i] = null; // delete the video completely
+                if(i < clipIndex || !self.videoObjects[i] || self.videoObjects[i].readyState < 4) {
+                    self.videoObjects[i] = null;
+                }
             }
 
-            // load the initial videos (we need to move this to another method!)
+            // load the initial video elements, show the first video element
             self.loadInitialElementsStartingAt(clipIndex);
-
             self.videoObjects[clipIndex].style.opacity = 1;
+
+            // in the event that the desired video element already existed, we may need to start it
+            // a ready state of 4 means that the video element has loaded enough data to start playing
+            if (self.isPlaying && self.videoObjects[clipIndex].readyState == 4 && self.videoObjects[clipIndex].paused) {
+                self.videoObjects[clipIndex].play();
+            }
         }
     }
 
@@ -284,10 +307,12 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
 
         videoElement.style.position = "absolute";
         videoElement.style.opacity = "0";
-        videoElement.style.webkitTransition = self.transitionTime + "s";
 
-        videoElement.addEventListener("loadedmetadata", self.onMetadataLoaded);
-        videoElement.addEventListener("loadeddata", self.onVideoReady);
+        videoElement.addEventListener("canplay", self.onCanPlay);
+        videoElement.addEventListener("durationchange", self.onDurationChange);
+        videoElement.addEventListener("loadeddata", self.onLoadedData);
+        videoElement.addEventListener("loadedmetadata", self.onLoadedMetadata);
+        videoElement.addEventListener("loadstart", self.onLoadStart);
         videoElement.addEventListener("play", self.onPlay);
         videoElement.addEventListener("pause", self.onPause);
         videoElement.addEventListener("timeupdate", self.onTimeUpdate);
@@ -297,12 +322,23 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
 
     this.loadInitialElementsStartingAt = function(clipIndex)
     {
-        for (var i = clipIndex; i < (clipIndex + 2); i++) {
-            self.videoObjects[i] = self.createVideo(i);
+        var maxIndex = Math.min(self.renderObject.EDL.length, clipIndex + self.preloadAmount + 1);
+
+        // make sure that all video elements have been removed from the container
+        while (self.videoContainer.lastChild) {
+            self.videoContainer.removeChild(self.videoContainer.lastChild);
         }
 
-        for (var i = clipIndex; i < (clipIndex + 2); i++)
-        {
+        // create the video object if it has not already been created
+        // in the event of seeking, the video object might have been previously created
+        for (var i = clipIndex; i < maxIndex; i++) {
+            if (!self.videoObjects[i]) {
+                self.videoObjects[i] = self.createVideo(i);
+            }
+        }
+
+        // add the video elements to the container in the correct order
+        for (var i = clipIndex; i < maxIndex; i++) {
             self.videoContainer.insertBefore(self.videoObjects[i], self.videoContainer.firstChild);
         }
     }
@@ -315,7 +351,24 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
 
     this.onDurationLoaded = function() {
         if (self.durationLoadedHandler) {
-            self.durationLoadedHandler();
+            self.durationLoadedHandler.call(this);
+        }
+    }
+
+    this.onLoadingStarted = function() {
+        self.loading = true;
+        if (self.loadingStartedHandler) {
+            self.loadingStartedHandler();
+        }
+    }
+
+    this.onLoadingStopped = function() {
+        if (self.loading)
+        {
+            self.loading = false;
+            if (self.loadingStoppedHandler) {
+                self.loadingStoppedHandler();
+            }
         }
     }
 
@@ -323,16 +376,22 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     // internal video element callbacks
     // =================================
 
-    this.onMetadataLoaded = function() {
+    this.onCanPlay = function() {
+        if (this == self.videoObjects[self.currentClipIndex]) {
+            self.onLoadingStopped();
+        }
+
+        // if we were seeking to the clip, and we were previously playing, we need to play it
+        if (this == self.videoObjects[self.currentClipIndex] && self.isPlaying) {
+            self.videoObjects[self.currentClipIndex].play();
+        }
+    }
+
+    this.onDurationChange = function() {
+        // add the duration to the endTime of the render object, whether or not we are trying to get the duration of the whole video
         var elementID = this.id;
         var clipID = parseInt(elementID.replace(self.playerID + "-", ""));
 
-        if (clipID == null || clipID < 0) {
-            self.onLoadError("Something wrong with a video element...");
-            return;
-        }
-
-        // add the duration to the endTime of the render object, whether or not we are trying to get the duration of the whole video
         if (this.duration && !self.renderObject.EDL[clipID].endTime) {
             self.renderObject.EDL[clipID].endTime = this.duration;
         }
@@ -359,55 +418,56 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
             self.durationLoadingVideo = null;
             self.onDurationLoaded();
         }
-
     }
 
-    this.onVideoReady = function() {
+    this.onLoadedData = function() {
+        if (this == self.videoObjects[0]) {
+            self.isVideoReady = true;
+            document.getElementById(self.playerID + "-" + self.currentClipIndex).style.opacity = "1";
+            if (self.videoReadyHandler) {
+                self.videoReadyHandler();
+            }
+        }
+    }
 
-        var elementId = this.id;
-        var clipID = parseInt(elementId.replace(self.playerID + "-", ""));
-
-        console.log('element on video ready', clipID);
+    this.onLoadedMetadata = function() {
+        var elementID = this.id;
+        var clipID = parseInt(elementID.replace(self.playerID + "-", ""));
 
         if (clipID == null || clipID < 0) {
-            self.onLoadError("Something wrong with video element...");
+            self.loadingErrorHandler("Something is wrong with a video element...");
             return;
         }
 
-        if (clipID == 0) {
-            self.isVideoReady = true;
-            document.getElementById(self.playerID + "-" + self.currentClipIndex).style.opacity = "1";
-            self.onReady();
-        }
+    }
 
-        if (clipID == self.currentClipIndex && self.isPlaying)
-        {
-            self.videoObjects[clipID].play();
+    this.onLoadStart = function() {
+        if (this == self.videoObjects[self.currentClipIndex]) {
+            self.onLoadingStarted();
         }
     }
 
     this.onPlay = function() {
-        if (self.playHandler && self.sendPlayEvent)
-        {
-            self.playHandler();
+        self.onLoadingStopped();
+        if (self.playHandler && self.sendPlayEvent) {
+            self.playHandler.call(self);
         }
         self.sendPlayEvent = false;
     }
 
     this.onPause = function() {
-        // this function is called when the video reaches the point in time when it is supposed to stop, or when it reaches the end of the video
+        // this function is called when the user pauses, when the video reaches the point in time when it is supposed to stop, or when it reaches the end of the video
 
-        if (self.pauseHandler && self.sendPauseEvent)
-        {
-            self.pauseHandler();
+        if (self.pauseHandler && self.sendPauseEvent) {
+            self.pauseHandler.call(self);
         }
         self.sendPauseEvent = false;
 
-        var videoId = parseInt(this.id.replace(self.playerID + "-", ""));
-        if (self.renderObject.EDL[videoId].endTime <= this.currentTime)
+        var clipIndex = parseInt(this.id.replace(self.playerID + "-", ""));
+        if (self.renderObject.EDL[clipIndex].endTime <= this.currentTime)
         {
             this.style.opacity = "0"; 
-            this.remove(); // should move to a transition handler
+            this.remove();
             self.videoObjects[self.currentClipIndex] = null; // with a large number of videos, if we don't do this then the video playback will eventually start to hitch
 
             self.currentClipIndex++;
@@ -416,18 +476,19 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
                 self.videoObjects[self.currentClipIndex].style.opacity = "1";
                 self.videoObjects[self.currentClipIndex].play();
 
-                if (self.renderObject.EDL.length > self.currentClipIndex + 1) {
-                    if (!self.videoObjects[self.currentClipIndex + 1]) {
-                        self.videoObjects[self.currentClipIndex + 1] = self.createVideo(self.currentClipIndex + 1);
+                var preloadIndex = self.currentClipIndex + self.preloadAmount;
+                if (self.renderObject.EDL.length > preloadIndex) {
+                    if (!self.videoObjects[preloadIndex]) {
+                        self.videoObjects[preloadIndex] = self.createVideo(preloadIndex);
                     }
-                    self.videoContainer.insertBefore(self.videoObjects[self.currentClipIndex + 1], self.videoContainer.firstChild);
+                    self.videoContainer.insertBefore(self.videoObjects[preloadIndex], self.videoContainer.firstChild);
                 }
 
             }
             else {
                 self.isPlaying = false;
-                if (self.onFinish) {
-                    self.onFinish();
+                if (self.finishedHandler) {
+                    self.finishedHandler();
                 }
                 if (self.autoReload)
                 {
@@ -440,12 +501,20 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     }
 
     this.onTimeUpdate = function() {
-        // TODO:
-        // 
-        // check here for transitions stuff
+        // check if we should begin to fade out the currently playing video
+        // only start the fade if the user requested a transition time, and we haven't already started the fade
+        if (self.transitionTime > 0 && self.videoObjects[self.currentClipIndex].opacity != 0)
+        { 
+            var end = self.renderObject.EDL[self.currentClipIndex] ? self.renderObject.EDL[self.currentClipIndex].endTime : this.duration;
+            if ((end - self.videoObjects[self.currentClipIndex].currentTime) < self.transitionTime)
+            {
+                self.videoObjects[self.currentClipIndex].style.webkitTransition = "opacity " + self.transitionTime + "s";
+                self.videoObjects[self.currentClipIndex].style.opacity = 0;
+            }
+        }
 
         if (self.timeUpdateHandler) {
-            self.timeUpdateHandler();
+            self.timeUpdateHandler.call(self);
         }
     }
 
@@ -457,7 +526,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.renderObject = renderObject;
 
     if (this.renderObject == null) {
-        this.onLoadError("Invalid Render Object");
+        this.loadingErrorHandler("Invalid Render Object");
         return;
     }
 

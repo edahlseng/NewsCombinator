@@ -2,10 +2,14 @@ var player;
 var currentRenderObject;
 var hideControlsTimer;
 
-// we want these variables to be public because we will access this element very frequently.
+// we want these variables to be public because we will access these elements frequently.
 // We don't want them to be computed each time they are needed
 var progressSlider;
 var sliderPosition;
+var loadingLogo
+var clockMinuteHand
+var clockHourHand
+
 
 function verticallyCenter()
 {
@@ -95,15 +99,15 @@ function setupVideoPlayer()
 	// ----------------------
 	// load video player
 	// ----------------------
-    function onReady() {        
+    function videoReadyHandler() {        
         // fade into the proper display situation
         var timeSelectionContainer = document.getElementById('timeSelectionContainer');
         var descriptionContainer = document.getElementById('descriptionContainer');
         var temporaryBackground = document.getElementById('temporaryBackground');
         var controlsContainer = document.getElementById('controlsContainer');
-        var loadingLogo = document.getElementById('loadingLogo');
-        var clockMinuteHand = document.getElementById('clockMinuteHand');
-        var clockHourHand = document.getElementById('clockHourHand');
+        loadingLogo = document.getElementById('loadingLogo');
+        clockMinuteHand = document.getElementById('clockMinuteHand');
+        clockHourHand = document.getElementById('clockHourHand');
         progressSlider = document.getElementById('progressSlider');
         sliderPosition = document.getElementById('sliderPosition');
 
@@ -138,20 +142,28 @@ function setupVideoPlayer()
 		mouseMove();
     }
 
-    function onLoadError(e) {
-        console.log("ERROR", e);
-    }
-
-    function onTimeUpdate() {
-        console.log("ON TIME UPDATE",　"Current Time is:", this.currentTime());
-    }
-
-    function onFinish() {
+    function finishedHandler() {
         mouseMove();
     }
 
-    function durationLoadedHandler() {
-    	
+    function loadingStartedHandler() {
+        if (loadingLogo.style.visibility = 'hidden')
+        {
+            clockMinuteHand.style.webkitAnimationPlayState = 'running';
+            clockHourHand.style.webkitAnimationPlayState = 'running';
+            loadingLogo.style.visibility = 'visible';
+            loadingLogo.style.opacity = 1;
+        }
+    }
+
+    function loadingStoppedHandler() {
+        if (loadingLogo.style.visibility = 'visible')
+        {
+            clockMinuteHand.style.webkitAnimationPlayState = 'paused';
+            clockHourHand.style.webkitAnimationPlayState = 'paused';
+            loadingLogo.style.visibility = 'hidden';
+            loadingLogo.style.opacity = 0;
+        }
     }
 
     function playHandler() {
@@ -186,18 +198,17 @@ function setupVideoPlayer()
     }
 
     player = new UMVideoPlayer("um_video_player_wrapper", response.renderObject, {
-        "onReady" : onReady, 
-        "onLoadError" : onLoadError, 
-        "onTimeUpdate" : onTimeUpdate, 
-        "onFinish" : onFinish,
-        "durationLoadedHandler" : durationLoadedHandler,
-        "playHandler" : playHandler,
-        "pauseHandler" : pauseHandler,
-        "timeUpdateHandler" : timeUpdateHandler,
         "transitionTime" : .3,
         "classString" : "um-videoPlayer",
         "autoReload" : false,
         "autoLoadDuration" : true,
+        "finishedHandler" : finishedHandler,
+        "loadingStartedHandler" : loadingStartedHandler,
+        "loadingStoppedHandler" : loadingStoppedHandler,
+        "playHandler" : playHandler,
+        "pauseHandler" : pauseHandler,
+        "timeUpdateHandler" : timeUpdateHandler,
+        "videoReadyHandler" : videoReadyHandler, 
     });
 	
 	// start the loading animation
