@@ -3,7 +3,7 @@ var currentRenderObject;
 var hideControlsTimer;
 
 // we want these variables to be public because we will access these elements frequently.
-// We don't want them to be computed each time they are needed
+// we don't want them to be computed each time they are needed
 var progressSlider;
 var sliderPosition;
 var loadingLogo
@@ -259,6 +259,5 @@ function mouseMove()
 function clipClicked(e)
 {
 	var clipIndex = parseInt(this.id.substring(4));
-	console.log(clipIndex);
 	player.seekToClipIndex(clipIndex);
 }

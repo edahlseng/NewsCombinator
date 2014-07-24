@@ -2,14 +2,12 @@
 //
 // add support for a progress callback that indicates that more video content was loaded, along with a buffered property that represents the amount of video content that is buffered
 // maybe some fullscreen support
+// implement the clip started callback
 
-function UMVideoPlayer(wrapperId, renderObject, options) {
+function UMVideoPlayer(videoContainerID, renderObject, options) {
     // helper variables
     var self = this;
     this.playerID = "UMVideoPlayer" + Math.round(Math.random() * (2000 - 1000) + 1000); // add a random number at the end in order to help prevent conflicting ID's with user defined elements
-    
-    // setup the container
-    this.videoContainer = document.getElementById(wrapperId);
 
     // assign options if necessarry
     this.autoReload = true;
@@ -62,52 +60,24 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     // "public" methods
     // --------------------------------------------------
 
-    this.play = function () {
-        if (self.isVideoReady) {
-            self.sendPlayEvent = true;
-            self.videoObjects[self.currentClipIndex].style.opacity = "1";
-            self.videoObjects[self.currentClipIndex].play();
-            this.isPlaying = true;
-        } else {
-            this.loadingErrorHandler("video not ready");
-        }
-
-    }
-
-    this.pause = function () {
-        if (!this.videoObjects[self.currentClipIndex].paused) {
-            self.sendPauseEvent = true;
-            this.videoObjects[self.currentClipIndex].pause();
-        }
-        if ((self.currentClipIndex + 1) < self.videoObjects.length) {
-            // sometimes the user will try to pause right in the middle of a transition, so we should make sure that the next video is also paused
-            if(!this.videoObjects[self.currentClipIndex + 1].paused) {
-                this.videoObjects[self.currentClipIndex + 1].pause();
-            }
-        }
-        this.isPlaying = false;
-    }
-
-    this.togglePlayPause = function () {
-        if (this.isPlaying)
+    this.currentTime = function () {
+        var previousDuration = 0;
+        for (var i = 0; i < self.currentClipIndex; i++)
         {
-            self.pause();
-        }
-        else
-        {
-            self.play();
-        }
-    }
+            var startTime = self.renderObject.EDL[i].startTime ? self.renderObject.EDL[i].startTime : 0;
 
-    this.loadDuration = function () {
-        for (var i = 0; i < self.renderObject.EDL.length; i++) {
-            if (!self.renderObject.EDL[i].endTime) {                
-                self.durationLoadingVideo = createVideo(i, "metadata");
-                return; // return so that we don't call onDurationLoaded                
+            if (!self.renderObject.EDL[i].endTime) {
+                console.log('ERROR trying to determine current time');
+                return null;
             }
+
+            var endTime = self.renderObject.EDL[i].endTime;
+
+            previousDuration += (endTime - startTime);
         }
 
-        self.onDurationLoaded();
+        var clipStart = self.renderObject.EDL[self.currentClipIndex].startTime ? self.renderObject.EDL[self.currentClipIndex].startTime : 0;
+        return previousDuration + Math.max((self.videoObjects[self.currentClipIndex].currentTime - clipStart), 0);
     }
 
     this.duration = function() {
@@ -139,24 +109,84 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         return self._duration;
     }
 
-    this.currentTime = function () {
-        var previousDuration = 0;
-        for (var i = 0; i < self.currentClipIndex; i++)
-        {
-            var startTime = self.renderObject.EDL[i].startTime ? self.renderObject.EDL[i].startTime : 0;
-
-            if (!self.renderObject.EDL[i].endTime) {
-                console.log('ERROR trying to determine current time');
-                return null;
+    this.loadDuration = function () {
+        for (var i = 0; i < self.renderObject.EDL.length; i++) {
+            if (!self.renderObject.EDL[i].endTime) {                
+                self.durationLoadingVideo = createVideo(i, "metadata");
+                return; // return so that we don't call onDurationLoaded                
             }
-
-            var endTime = self.renderObject.EDL[i].endTime;
-
-            previousDuration += (endTime - startTime);
         }
 
-        var clipStart = self.renderObject.EDL[self.currentClipIndex].startTime ? self.renderObject.EDL[self.currentClipIndex].startTime : 0;
-        return previousDuration + (self.videoObjects[self.currentClipIndex].currentTime - clipStart);
+        self.onDurationLoaded();
+    }
+
+    this.play = function () {
+        if (self.isVideoReady) {
+            self.sendPlayEvent = true;
+            self.videoObjects[self.currentClipIndex].style.opacity = "1";
+            self.videoObjects[self.currentClipIndex].play();
+            this.isPlaying = true;
+        } else {
+            this.onLoadingError("video not ready");
+        }
+
+    }
+
+    this.pause = function () {
+        if (!this.videoObjects[self.currentClipIndex].paused) {
+            self.sendPauseEvent = true;
+            this.videoObjects[self.currentClipIndex].pause();
+        }
+        if ((self.currentClipIndex + 1) < self.videoObjects.length) {
+            // sometimes the user will try to pause right in the middle of a transition, so we should make sure that the next video is also paused
+            if(!this.videoObjects[self.currentClipIndex + 1].paused) {
+                this.videoObjects[self.currentClipIndex + 1].pause();
+            }
+        }
+        this.isPlaying = false;
+    }
+
+    this.seekToClipIndex = function(clipIndex) {
+        // check to see if the seek request is valid or no
+        if (clipIndex < 0 || clipIndex >= self.renderObject.EDL.length)
+        {
+            console.log("Requested index out of range");
+            return;
+        }
+        
+        // if the requested index is the currently playing video, just reset the time to the start time
+        if (clipIndex == self.currentClipIndex)
+        {
+            var startTime = self.renderObject.EDL[clipIndex].startTime ? self.renderObject.EDL[clipIndex].startTime : 0;
+
+            self.videoObjects[clipIndex].currentTime = startTime;
+        }
+        else
+        {
+            self.currentClipIndex = clipIndex;
+
+            // remove all videos from the container
+            while (self.videoContainer.lastChild) {
+                self.videoContainer.removeChild(self.videoContainer.lastChild);
+            }
+
+            // dispose of video elements that came before the desired clipIndex
+            for (var i = 0; i < self.renderObject.EDL.length; i++) {
+                if(i < clipIndex || (self.videoObjects[i] && self.videoObjects[i].readyState < 4)) {
+                    self.videoObjects[i] = null;
+                }
+            }
+
+            // load the initial video elements, show the first video element
+            self.loadInitialElementsStartingAt(clipIndex);
+            self.videoObjects[clipIndex].style.opacity = 1;
+
+            // in the event that the desired video element already existed, we may need to start it
+            // a ready state of 4 means that the video element has loaded enough data to start playing
+            if (self.isPlaying && self.videoObjects[clipIndex].readyState == 4 && self.videoObjects[clipIndex].paused) {
+                self.videoObjects[clipIndex].play();
+            }
+        }
     }
 
     this.seekToSeconds = function(desiredSeconds) {
@@ -237,46 +267,14 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         }
     }
 
-    this.seekToClipIndex = function(clipIndex) {
-        // check to see if the seek request is valid or no
-        if (clipIndex < 0 || clipIndex >= self.renderObject.EDL.length)
+    this.togglePlayPause = function () {
+        if (this.isPlaying)
         {
-            console.log("Requested index out of range");
-            return;
-        }
-        
-        // if the requested index is the currently playing video, just reset the time to the start time
-        if (clipIndex == self.currentClipIndex)
-        {
-            var startTime = self.renderObject.EDL[clipIndex].startTime ? self.renderObject.EDL[clipIndex].startTime : 0;
-
-            self.videoObjects[clipIndex].currentTime = startTime;
+            self.pause();
         }
         else
         {
-            self.currentClipIndex = clipIndex;
-
-            // remove all videos from the container
-            while (self.videoContainer.lastChild) {
-                self.videoContainer.removeChild(self.videoContainer.lastChild);
-            }
-
-            // dispose of video elements that came before the desired clipIndex
-            for (var i = 0; i < self.renderObject.EDL.length; i++) {
-                if(i < clipIndex || !self.videoObjects[i] || self.videoObjects[i].readyState < 4) {
-                    self.videoObjects[i] = null;
-                }
-            }
-
-            // load the initial video elements, show the first video element
-            self.loadInitialElementsStartingAt(clipIndex);
-            self.videoObjects[clipIndex].style.opacity = 1;
-
-            // in the event that the desired video element already existed, we may need to start it
-            // a ready state of 4 means that the video element has loaded enough data to start playing
-            if (self.isPlaying && self.videoObjects[clipIndex].readyState == 4 && self.videoObjects[clipIndex].paused) {
-                self.videoObjects[clipIndex].play();
-            }
+            self.play();
         }
     }
 
@@ -343,7 +341,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         }
     }
 
-    this.onClipStartedHandler = function() {
+    this.onClipStarted = function() {
         if (self.clipStartedHandler) {
             self.clipStartedHandler();
         }
@@ -352,6 +350,12 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.onDurationLoaded = function() {
         if (self.durationLoadedHandler) {
             self.durationLoadedHandler.call(this);
+        }
+    }
+
+    this.onLoadingError = function(errorMessage) {
+        if (self.loadingErrorHandler) {
+            self.loadingErrorHandler(errorMessage);
         }
     }
 
@@ -426,7 +430,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.onLoadedData = function() {
         if (this == self.videoObjects[0]) {
             self.isVideoReady = true;
-            document.getElementById(self.playerID + "-" + self.currentClipIndex).style.opacity = "1";
+            self.videoObjects[0].style.opacity = 1;
             if (self.videoReadyHandler) {
                 self.videoReadyHandler();
             }
@@ -438,7 +442,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
         var clipID = parseInt(elementID.replace(self.playerID + "-", ""));
 
         if (clipID == null || clipID < 0) {
-            self.loadingErrorHandler("Something is wrong with a video element...");
+            self.onLoadingError("Something is wrong with a video element...");
             return;
         }
 
@@ -490,11 +494,17 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
             }
             else {
                 self.isPlaying = false;
+                // we should send a pause event in addition to the finished event
+                if (self.pauseHandler) {
+                    self.pauseHandler.call(self);
+                }
                 if (self.finishedHandler) {
+                    self.isVideoReady = false;
                     self.finishedHandler();
                 }
                 if (self.autoReload)
                 {
+                    self.currentClipIndex = 0;
                     self.loadInitialElementsStartingAt(0);
                 }
                 
@@ -506,7 +516,7 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     this.onTimeUpdate = function() {
         // check if we should begin to fade out the currently playing video
         // only start the fade if the user requested a transition time, and we haven't already started the fade
-        if (self.transitionTime > 0 && self.videoObjects[self.currentClipIndex].opacity != 0)
+        if (self.transitionTime > 0 && self.videoObjects[self.currentClipIndex].style.opacity != 0)
         { 
             var end = self.renderObject.EDL[self.currentClipIndex] ? self.renderObject.EDL[self.currentClipIndex].endTime : this.duration;
             if ((end - self.videoObjects[self.currentClipIndex].currentTime) < self.transitionTime)
@@ -526,10 +536,17 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     // This section must come at the end, so that the methods that are referenced are defined beforehand.
     // ==================================================================================================
 
-    this.renderObject = renderObject;
+    // setup the container, check to make sure it exists
+    this.videoContainer = document.getElementById(videoContainerID);
+    if (!this.videoContainer) {
+        this.onLoadingError("Specified Video Container does not exist");
+        return;
+    }
 
+    // set up the render object, check to make sure it exists
+    this.renderObject = renderObject;
     if (this.renderObject == null) {
-        this.loadingErrorHandler("Invalid Render Object");
+        this.onLoadingError("Invalid Render Object");
         return;
     }
 
