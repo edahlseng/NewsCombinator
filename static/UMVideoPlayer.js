@@ -356,9 +356,12 @@ function UMVideoPlayer(wrapperId, renderObject, options) {
     }
 
     this.onLoadingStarted = function() {
-        self.loading = true;
-        if (self.loadingStartedHandler) {
-            self.loadingStartedHandler();
+        if (!self.loading)
+        {
+            self.loading = true;
+            if (self.loadingStartedHandler) {
+                self.loadingStartedHandler();
+            }
         }
     }
 
