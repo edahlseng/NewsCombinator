@@ -6,5 +6,6 @@
 ###################
 .Python
 /bin
+/local
 /include
 /lib

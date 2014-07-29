@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from flask import Flask, render_template, request   # for running the Flask server
 import sys                                          # for obtaining command line arguments
 import json                                         # for creating json objects to send to client
