@@ -37,7 +37,7 @@ def renderObjectForTimeAvailable():
     for trend in trends:
         UM_QUERY_API = "http://um-query.media.mit.edu/search/"
         desiredTime = timeAvailable / len(trends)
-        url = UM_QUERY_API + urllib2.quote(trend.encode('utf-8')) + '?duration=' + str(int(desiredTime))
+        url = UM_QUERY_API + urllib2.quote(trend.encode('utf-8')) + '?duration=' + str(int(desiredTime)) + "&after=2014-10-09T00:00:00.000Z"
         umQueryResponse = json.loads(urllib2.urlopen(url).read())
         if umQueryResponse["code"] == 0:
             # videos.append(umQueryResponse["results"][0])
